@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>송월 부동산 자산관리 대시보드</title>
+<style>
+:root{
+  --bg:#F9F9F8;--surface:#FFFFFF;--surface2:#F5F5F4;
+  --border:#E5E5E3;--border2:#D4D4D2;
+  --text:#1A1A18;--text2:#5F5E5A;--text3:#888780;
+  --accent:#1A6B4A;--accent-bg:#E8F5EF;--accent-border:#A8D5BC;
+  --purple:#3C3489;--purple-bg:#EEEDFE;--purple-border:#C5C2F5;
+  --danger:#C23B22;--danger-bg:#FCEBEB;--danger-border:#F5B8AE;
+  --warning:#8A5A00;--warning-bg:#FEF5E4;--warning-border:#F0D090;
+  --success:#1A6B4A;--success-bg:#E8F5EF;--success-border:#A8D5BC;
+  --pro:#3C3489;--pro-bg:#EEEDFE;--pro-border:#C5C2F5;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.container{max-width:1200px;margin:0 auto;padding:24px 20px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:16px;font-weight:600}
+.corp-tabs{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.corp-tab{font-size:13px;padding:6px 14px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:background .15s}
+.corp-tab.active{background:var(--accent);color:#fff}
+.updated{font-size:12px;color:var(--text3)}
+.main-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px}
+.main-tab{font-size:14px;padding:10px 18px;cursor:pointer;border:none;background:transparent;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.loading{text-align:center;padding:60px;color:var(--text3);font-size:15px}
+.banners{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.banner{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:var(--radius);border:1px solid;font-size:13px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.kpi-val{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.kpi-sub{font-size:12px;color:var(--text3)}
+.main-grid{display:grid;grid-template-columns:1fr 240px;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:768px){.two-col{grid-template-columns:1fr}}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.bottom-grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-hd-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-hd-meta{font-size:12px;color:var(--text3)}
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;background:transparent;transition:all .15s}
+.chip.on{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{font-size:11px;font-weight:600;color:var(--text3);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.s-운영중{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
+.s-공실{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.s-매각예정{background:var(--pro-bg);color:var(--pro);border:1px solid var(--pro-border)}
+.s-자가사용{background:var(--surface2);color:var(--text3);border:1px solid var(--border2)}
+.s-납부완료{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
+.s-미납{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.s-부분납{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)}
+.t-토지{background:#EAF3DE;color:#27500A;border:1px solid #B8DFA0}
+.t-상업건물{background:#EEEDFE;color:#3C3489;border:1px solid #C5C2F5}
+.t-공장건물{background:#FEF5E4;color:#633806;border:1px solid #F0D090}
+.t-원룸{background:#E6F1FB;color:#0C447C;border:1px solid #A8C8F0}
+.t-기숙사건물{background:#E8F5EF;color:#085041;border:1px solid #A8D5BC}
+.expiry-item{padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.expiry-item:last-child{border-bottom:none}
+.expiry-item:hover{background:var(--surface2);margin:0 -20px;padding:10px 20px}
+.expiry-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.expiry-name{font-size:13px;font-weight:600}
+.expiry-meta{font-size:12px;color:var(--text3)}
+.dday{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.dd-red{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.dd-orange{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)}
+.dd-green{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
+.dd-over{background:var(--pro-bg);color:var(--pro);border:1px solid var(--pro-border)}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.bar-label{font-size:12px;color:var(--text2);flex-shrink:0;width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-num{text-align:right;color:var(--text);font-weight:600;font-size:12px;flex-shrink:0;width:68px}
+.pay-item{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:10px}
+.pay-item:last-child{border-bottom:none}
+.pay-name{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay-amt{font-size:12px;color:var(--text3);flex-shrink:0}
+.rank-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.rank-item:last-child{border-bottom:none}
+.rank-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.rank-info{flex:1}
+.rank-name{font-size:13px;font-weight:600}
+.rank-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.roi-bar-bg{height:4px;background:var(--surface2);border-radius:2px;margin-top:5px;overflow:hidden}
+.roi-bar-fill{height:100%;border-radius:2px;background:var(--accent)}
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.legend{display:flex;flex-direction:column;gap:8px;flex:1}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-label{color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend-val{color:var(--text);font-weight:600;flex-shrink:0}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:90%;max-width:480px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{font-size:24px;color:var(--text3);cursor:pointer;border:none;background:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.modal-close:hover{background:var(--surface2)}
+.modal-body{padding:16px 20px}
+.m-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.m-meta span{font-size:12px;background:var(--surface2);padding:3px 10px;border-radius:20px;color:var(--text2)}
+.sec-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin:14px 0 8px;display:flex;align-items:center;gap:8px;text-transform:uppercase}
+.sec-line{flex:1;height:1px;background:var(--border)}
+.guide-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;font-size:13px;line-height:1.5}
+.guide-num{width:20px;height:20px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;font-weight:600;margin-left:6px;vertical-align:2px}
+.tag-legal{background:var(--pro-bg);color:var(--pro)}
+.tag-finance{background:var(--success-bg);color:var(--success)}
+.tag-urgent{background:var(--danger-bg);color:var(--danger)}
+.tag-data{background:var(--warning-bg);color:var(--warning)}
+.warn-box{background:var(--pro-bg);border:1px solid var(--pro-border);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--pro);margin-bottom:14px}
+footer{text-align:center;font-size:12px;color:var(--text3);margin-top:32px;padding-top:16px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="topbar">
+  <div class="topbar-left">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    <div class="logo">송월 부동산 자산관리</div>
+    <div class="corp-tabs">
+      <button class="corp-tab active" onclick="setCorp('전체',this)">전체</button>
+      <button class="corp-tab" onclick="setCorp('송월(주)',this)">송월(주)</button>
+      <button class="corp-tab" onclick="setCorp('(주)송월피앤아이',this)">(주)송월피앤아이</button>
+    </div>
+  </div>
+  <div class="updated" id="updated-time">데이터 로딩 중...</div>
+</div>
+
+<div class="main-tabs">
+  <button class="main-tab active" onclick="showTab('home',this)">메인 현황</button>
+  <button class="main-tab" onclick="showTab('roi',this)">수익성 분석</button>
+  <button class="main-tab" onclick="showTab('portfolio',this)">자산 포트폴리오</button>
+</div>
+
+<div id="tab-home" class="tab-panel active"><div class="loading">⏳ 데이터 불러오는 중...</div></div>
+<div id="tab-roi" class="tab-panel"><div class="loading">⏳ 데이터 불러오는 중...</div></div>
+<div id="tab-portfolio" class="tab-panel"><div class="loading">⏳ 데이터 불러오는 중...</div></div>
+
+<footer>송월 부동산 자산관리 대시보드 · 내부 보고용</footer>
+</div>
+
+<!-- 모달 -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title" id="modal-title"></div><button class="modal-close" onclick="closeModal(null)">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ★ GitHub 정보
+const GITHUB_USER = "rnjstjrgus-ship-it";
+const GITHUB_REPO = "songwol-assets";
+const DATA_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/data.json`;
+
+const RATE = 0.05; // 전월세전환율 5%
+const TC = {"상업건물":"#7F77DD","공장건물":"#EF9F27","기숙사건물":"#1D9E75","원룸":"#378ADD","토지":"#639922"};
+const SC = {"운영중":"#1A6B4A","공실":"#C23B22","매각예정":"#3C3489","자가사용":"#888780"};
+const TYPES = ["전체","토지","상업건물","공장건물","원룸","기숙사건물"];
+const STATS = ["전체","운영중","공실","매각예정","자가사용"];
+
+let RAW = null;
+let ASSETS = [], CONTRACTS = [], PAYMENTS = [];
+let corp = '전체', typeF = '전체', statF = '전체';
+let activeTab = 'home';
+
+// 포맷 함수
+const M = n => {if(!n||n<=0)return'—';if(n>=1e10)return'₩'+(n/1e8).toFixed(0)+'억';if(n>=1e8)return'₩'+(n/1e8).toFixed(1)+'억';if(n>=1e7)return'₩'+(n/1e7).toFixed(0)+'천만';return'₩'+(n/1e4).toFixed(0)+'만';};
+const C = n => {if(!n)return'—';return n>=1e9?(n/1e8).toFixed(0)+'억':(n/1e8).toFixed(1)+'억';};
+
+// 수익률 계산 (보증금 환산 5% 방식)
+function roi(a) {
+  if(a.astat !== '운영중' || !a.cost) return null;
+  const depM = (a.deposit||0) * RATE / 12;
+  const tot = (a.income||0) + depM;
+  if(!tot) return null;
+  return (tot * 12 / a.cost * 100);
+}
+const roiS = a => { const r = roi(a); return r ? r.toFixed(2)+'%' : null; };
+
+// 자산별 수익·보증금 집계
+function buildAssets(rawAssets, rawContracts) {
+  const incomeMap = {}, depositMap = {};
+  rawContracts.forEach(c => {
+    const aid = c.asset_id;
+    if(!incomeMap[aid]) { incomeMap[aid] = 0; depositMap[aid] = 0; }
+    incomeMap[aid] += (c.monthly||0) + (c.mgmt||0);
+    depositMap[aid] += (c.deposit||0);
+  });
+  return rawAssets.map(a => ({
+    ...a,
+    income: incomeMap[a.id] || 0,
+    deposit: depositMap[a.id] || 0,
+  }));
+}
+
+// 데이터 로드
+async function loadData() {
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    RAW = await res.json();
+    ASSETS = buildAssets(RAW.assets, RAW.contracts);
+    CONTRACTS = RAW.contracts;
+    PAYMENTS = RAW.payments;
+    document.getElementById('updated-time').textContent = '최종 업데이트: ' + RAW.updated;
+    renderTab(activeTab);
+  } catch(e) {
+    document.getElementById('updated-time').textContent = '❌ 데이터 로드 실패';
+    console.error(e);
+  }
+}
+
+function cF(arr) { return arr.filter(a => corp==='전체' || a.corp===corp); }
+function full() { return ASSETS.filter(a => (corp==='전체'||a.corp===corp) && (typeF==='전체'||a.type===typeF) && (statF==='전체'||a.astat===statF)); }
+
+function showTab(id, el) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  activeTab = id;
+  if(RAW) renderTab(id);
+}
+function setCorp(c, el) {
+  corp = c;
+  document.querySelectorAll('.corp-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(RAW) renderTab(activeTab);
+}
+function renderTab(id) {
+  if(id==='home') renderHome();
+  else if(id==='roi') renderROI();
+  else renderPortfolio();
+}
+
+// ══ 탭1: 메인 현황 ══
+function renderHome() {
+  const data = cF(ASSETS);
+  const active = data.filter(a=>a.astat==='운영중');
+  const inc = active.reduce((s,a)=>s+a.income,0);
+  const cost = active.reduce((s,a)=>s+a.cost,0);
+  const vacant = data.filter(a=>a.astat==='공실').length;
+  const sell = data.filter(a=>a.astat==='매각예정').length;
+
+  // 만료 계약 (오늘 기준 D-day)
+  const today = new Date();
+  const expiry = CONTRACTS
+    .filter(c => (corp==='전체'||c.corp===corp) && c.dday !== null && c.dday <= 365)
+    .sort((a,b) => a.dday - b.dday);
+  const over = expiry.filter(e=>e.dday<0);
+  const soon90 = expiry.filter(e=>e.dday>=0&&e.dday<=90);
+
+  // 이번달 납부현황
+  const thisMonth = PAYMENTS.filter(p => {
+    const sorted = [...PAYMENTS].sort((a,b)=>b.ym.localeCompare(a.ym));
+    return p.ym === (sorted[0]?.ym || '');
+  });
+
+  let html = '';
+
+  // 배너
+  let banners = '';
+  if(over.length) banners += `<div class="banner" style="background:var(--pro-bg);border-color:var(--pro-border);color:var(--pro)">⚠ 묵시적 연장 확인 필요 — ${over.map(e=>e.tenant||e.asset_id).join(' · ')}</div>`;
+  if(soon90.length) banners += `<div class="banner" style="background:var(--warning-bg);border-color:var(--warning-border);color:var(--warning)">🕐 계약 만료 90일 이내 — ${soon90.map(e=>(e.tenant||e.asset_id)+' (D-'+e.dday+')').join(' · ')}</div>`;
+  const unpaid = PAYMENTS.filter(p=>p.status==='미납');
+  if(unpaid.length) banners += `<div class="banner" style="background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)">💰 임대료 미납 — ${unpaid.length}건</div>`;
+
+  html += `<div class="banners">${banners}</div>`;
+
+  // KPI
+  const annROI = cost&&inc ? (inc*12/cost*100).toFixed(1)+'%' : '—';
+  html += `<div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">총 자산</div><div class="kpi-val">${data.length}개</div><div class="kpi-sub">운영중 ${active.length}개</div></div>
+    <div class="kpi"><div class="kpi-label">월 임대수익</div><div class="kpi-val">${M(inc)}</div><div class="kpi-sub">연 ${M(inc*12)}</div></div>
+    <div class="kpi"><div class="kpi-label">공실·매각예정</div><div class="kpi-val" style="color:${vacant+sell?'var(--danger)':'var(--success)'}">${vacant+sell}건</div><div class="kpi-sub">공실 ${vacant} · 매각 ${sell}</div></div>
+    <div class="kpi"><div class="kpi-label">연 수익률 (운영중)</div><div class="kpi-val">${annROI}</div><div class="kpi-sub">보증금 환산 5% 기준</div></div>
+  </div>`;
+
+  // 자산 목록 + 만료
+  const filters = TYPES.map(t=>`<button class="chip ${typeF===t?'on':''}" onclick="setType('${t}')">${t}</button>`).join('')
+    + '<span style="display:inline-block;width:1px;height:18px;background:var(--border);margin:0 3px;vertical-align:middle"></span>'
+    + STATS.map(s=>`<button class="chip ${statF===s?'on':''}" onclick="setStat('${s}')">${s==='전체'?'전체상태':s}</button>`).join('');
+
+  const tableRows = full().map(a => {
+    const r = roiS(a);
+    return `<tr><td title="${a.name}">${a.name}</td>
+      <td><span class="pill t-${a.type}">${a.type}</span></td>
+      <td style="font-size:12px;color:${a.corp==='송월(주)'?'#1A6B4A':'#3C3489'};font-weight:600;overflow:hidden;text-overflow:ellipsis">${a.corp}</td>
+      <td><span class="pill s-${a.astat}">${a.astat}</span></td>
+      <td style="text-align:right;font-weight:600">${M(a.income)}</td>
+      <td style="text-align:right;font-weight:600;color:${r?'var(--success)':'var(--text3)'}">${r||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const expiryRows = expiry.slice(0,8).map(e => {
+    const cl = e.dday<0?'dd-over':e.dday<=30?'dd-red':e.dday<=90?'dd-orange':'dd-green';
+    const lb = e.dday<0?`+${Math.abs(e.dday)}일 경과`:e.dday===0?'오늘':`D-${e.dday}`;
+    const asset = ASSETS.find(a=>a.id===e.asset_id);
+    const name = asset ? asset.name : e.asset_id;
+    return `<div class="expiry-item" onclick="openGuide('${name}',${e.dday},'${(e.tenant||'').replace(/'/g,"\\'")}',${e.monthly||0})">
+      <div class="expiry-hd"><div class="expiry-name">${name}</div><span class="dday ${cl}">${lb}</span></div>
+      <div class="expiry-meta">${e.tenant||'—'} · ${M(e.monthly)}/월</div>
+    </div>`;
+  }).join('');
+
+  html += `<div class="main-grid">
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">자산 목록</div><div class="card-hd-meta" id="asset-count">${full().length}개 자산</div></div>
+      <div class="filter-row" id="type-filters">${filters}</div>
+      <table><thead><tr>
+        <th style="width:28%">자산명</th><th style="width:15%">유형</th>
+        <th style="width:17%">법인</th><th style="width:13%">상태</th>
+        <th style="width:15%">월수익</th><th style="width:12%">수익률</th>
+      </tr></thead><tbody>${tableRows}</tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-title">계약 만료 현황</div><div class="card-hd-meta">클릭 시 업무 가이드</div></div>
+      ${expiryRows || '<div style="font-size:13px;color:var(--text3);padding:12px 0;text-align:center">만료 예정 계약 없음</div>'}
+    </div>
+  </div>`;
+
+  // 유형별 수익 바차트
+  const activeData = cF(ASSETS).filter(a=>a.astat==='운영중');
+  const typeTotals = {};
+  ["상업건물","공장건물","기숙사건물","원룸","토지"].forEach(t=>{typeTotals[t]=activeData.filter(a=>a.type===t).reduce((s,a)=>s+a.income,0);});
+  const maxT = Math.max(...Object.values(typeTotals),1);
+  const barRows = Object.entries(typeTotals).map(([t,v])=>`
+    <div class="bar-row"><div class="bar-label">${t}</div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(v/maxT*100)}%;background:${TC[t]}"></div></div>
+    <div class="bar-num">${v>0?M(v):'—'}</div></div>`).join('');
+
+  // 납부현황
+  const latestYm = [...new Set(PAYMENTS.map(p=>p.ym))].sort().reverse()[0] || '';
+  const latestPayments = PAYMENTS.filter(p=>p.ym===latestYm);
+  const payRows = latestPayments.map(p => {
+    const c = CONTRACTS.find(x=>x.id===p.contract_id);
+    const asset = c ? ASSETS.find(a=>a.id===c.asset_id) : null;
+    const name = asset ? asset.name : p.contract_id;
+    return `<div class="pay-item">
+      <div class="pay-name">${name}</div>
+      <div class="pay-amt">${p.paid>0?M(p.paid):'—'}</div>
+      <span class="pill s-${p.status}">${p.status}</span>
+    </div>`;
+  }).join('');
+
+  html += `<div class="bottom-grid">
+    <div class="card"><div class="card-hd"><div class="card-hd-title">유형별 월수익</div><div class="card-hd-meta">운영중 자산 기준</div></div>${barRows}</div>
+    <div class="card"><div class="card-hd"><div class="card-hd-title">임대료 납부 현황</div><div class="card-hd-meta">${latestYm} 기준</div></div>${payRows||'<div style="font-size:13px;color:var(--text3);padding:12px 0;text-align:center">납부 데이터 없음</div>'}</div>
+  </div>`;
+
+  document.getElementById('tab-home').innerHTML = html;
+}
+
+function setType(t){typeF=t;renderHome();}
+function setStat(s){statF=s;renderHome();}
+
+// ══ 탭2: 수익성 분석 ══
+function renderROI() {
+  const data = cF(ASSETS);
+  const active = data.filter(a=>a.astat==='운영중');
+  const withROI = active.filter(a=>a.income>0).sort((a,b)=>(roi(b)||0)-(roi(a)||0));
+  const inc = active.reduce((s,a)=>s+a.income,0);
+  const cost = active.reduce((s,a)=>s+a.cost,0);
+  const maxR = withROI.length ? (roi(withROI[0])||1) : 1;
+  const gc = ['#EF9F27','#888780','#B87333'];
+
+  let html = `<div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">수익 발생 자산</div><div class="kpi-val">${withROI.length}개</div><div class="kpi-sub">운영중 ${active.length}개 중</div></div>
+    <div class="kpi"><div class="kpi-label">월 총수익</div><div class="kpi-val">${M(inc)}</div><div class="kpi-sub">연 ${M(inc*12)}</div></div>
+    <div class="kpi"><div class="kpi-label">최고 ROI 자산</div><div class="kpi-val">${withROI.length?roiS(withROI[0]):'—'}</div><div class="kpi-sub" style="color:var(--success)">${withROI.length?withROI[0].name:''}</div></div>
+    <div class="kpi"><div class="kpi-label">전체 연 수익률</div><div class="kpi-val">${cost&&inc?(inc*12/cost*100).toFixed(1)+'%':'—'}</div><div class="kpi-sub">보증금 환산 5% 기준</div></div>
+  </div>`;
+
+  const rankRows = withROI.map((a,i)=>`
+    <div class="rank-item">
+      <div class="rank-num" style="background:${i<3?gc[i]+'33':'var(--surface2)'};color:${i<3?gc[i]:'var(--text3)'}">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${a.name}</div>
+        <div class="rank-meta">${a.corp==='송월(주)'?'송월':'피앤아이'} · 취득가 ₩${C(a.cost)} · 월${M(a.income)}</div>
+        <div class="roi-bar-bg"><div class="roi-bar-fill" style="width:${Math.round((roi(a)||0)/maxR*100)}%"></div></div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--success)">${roiS(a)}</div>
+    </div>`).join('');
+
+  // 파이차트
+  const typeInc = {};
+  active.forEach(a=>{typeInc[a.type]=(typeInc[a.type]||0)+a.income;});
+  const te = Object.entries(typeInc).filter(([,v])=>v>0);
+  const tt = te.reduce((s,[,v])=>s+v,0)||1;
+  let deg=0;
+  const paths = te.map(([t,v])=>{
+    const p=v/tt,d=p*360,r=60,cx=80,cy=80;
+    const s1=(deg-90)*Math.PI/180,e1=(deg+d-90)*Math.PI/180;
+    const x1=cx+r*Math.cos(s1),y1=cy+r*Math.sin(s1);
+    const x2=cx+r*Math.cos(e1),y2=cy+r*Math.sin(e1);
+    deg+=d;
+    return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${d>180?1:0},1 ${x2},${y2} Z" fill="${TC[t]||'#888'}"/>`;
+  }).join('');
+  const legend = te.map(([t,v])=>`<div class="legend-item"><div class="legend-dot" style="background:${TC[t]}"></div><div class="legend-label">${t}</div><div class="legend-val">${M(v)}</div></div>`).join('');
+
+  html += `<div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-hd-title">자산별 ROI 랭킹</div><div class="card-hd-meta">운영중 · 보증금환산 5%</div></div>${rankRows||'<div style="color:var(--text3);font-size:13px;padding:12px 0">수익 데이터 없음</div>'}</div>
+    <div class="card"><div class="card-hd"><div class="card-hd-title">유형별 수익 비중</div><div class="card-hd-meta">월수익 합계 기준</div></div>
+      <div class="donut-wrap">
+        <svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="60" fill="#F5F5F4"/>${paths}<circle cx="80" cy="80" r="38" fill="white"/><text x="80" y="76" text-anchor="middle" font-size="11" fill="#888780">월수익</text><text x="80" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1A1A18">${M(tt)}</text></svg>
+        <div class="legend">${legend}</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('tab-roi').innerHTML = html;
+}
+
+// ══ 탭3: 자산 포트폴리오 ══
+function renderPortfolio() {
+  const data = cF(ASSETS);
+  const tc = data.reduce((s,a)=>s+a.cost,0);
+  const sc = {};
+  data.forEach(a=>{sc[a.astat]=(sc[a.astat]||0)+1;});
+  const mx = data.reduce((m,a)=>a.cost>m.cost?a:m,{cost:0});
+
+  let html = `<div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">총 자산 수</div><div class="kpi-val">${data.length}개</div><div class="kpi-sub">${corp==='전체'?'송월 7 · 피앤아이 11':corp}</div></div>
+    <div class="kpi"><div class="kpi-label">취득가 총액</div><div class="kpi-val">₩${C(tc)}</div><div class="kpi-sub">장부가 기준</div></div>
+    <div class="kpi"><div class="kpi-label">최대 자산</div><div class="kpi-val">₩${C(mx.cost)}</div><div class="kpi-sub">${mx.name||''}</div></div>
+    <div class="kpi"><div class="kpi-label">자산 현황</div><div class="kpi-val">${sc['운영중']||0}개 운영</div><div class="kpi-sub">공실 ${sc['공실']||0} · 매각 ${sc['매각예정']||0}</div></div>
+  </div>`;
+
+  // 유형별 취득가 파이
+  const tca={};data.forEach(a=>{tca[a.type]=(tca[a.type]||0)+a.cost;});
+  const te2=Object.entries(tca).sort((a,b)=>b[1]-a[1]);
+  let deg2=0;
+  const paths2=te2.map(([t,v])=>{
+    const p=v/tc,d=p*360,r=60,cx=80,cy=80;
+    const s1=(deg2-90)*Math.PI/180,e1=(deg2+d-90)*Math.PI/180;
+    const x1=cx+r*Math.cos(s1),y1=cy+r*Math.sin(s1);
+    const x2=cx+r*Math.cos(e1),y2=cy+r*Math.sin(e1);
+    deg2+=d;
+    return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${d>180?1:0},1 ${x2},${y2} Z" fill="${TC[t]||'#888'}"/>`;
+  }).join('');
+  const legend2=te2.map(([t,v])=>`<div class="legend-item"><div class="legend-dot" style="background:${TC[t]}"></div><div class="legend-label">${t}</div><div class="legend-val">₩${C(v)} <span style="color:var(--text3);font-size:11px">${(v/tc*100).toFixed(0)}%</span></div></div>`).join('');
+
+  // 상태 바차트
+  const sd=[{k:"운영중",v:sc['운영중']||0},{k:"공실",v:sc['공실']||0},{k:"매각예정",v:sc['매각예정']||0},{k:"자가사용",v:sc['자가사용']||0}];
+  const ms=Math.max(...sd.map(s=>s.v),1);
+  const statBars=sd.map(s=>`
+    <div class="bar-row"><div class="bar-label" style="width:56px">${s.k}</div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(s.v/ms*100)}%;background:${SC[s.k]}"></div></div>
+    <div style="width:44px;text-align:right"><span class="pill s-${s.k}">${s.v}개</span></div></div>`).join('');
+
+  html += `<div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-hd-title">유형별 자산 구성</div><div class="card-hd-meta">취득가 기준</div></div>
+      <div class="donut-wrap">
+        <svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="60" fill="#F5F5F4"/>${paths2}<circle cx="80" cy="80" r="38" fill="white"/><text x="80" y="76" text-anchor="middle" font-size="11" fill="#888780">총액</text><text x="80" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#1A1A18">₩${C(tc)}</text></svg>
+        <div class="legend">${legend2}</div>
+      </div>
+    </div>
+    <div class="card"><div class="card-hd"><div class="card-hd-title">자산상태 현황</div></div>${statBars}</div>
+  </div>`;
+
+  // 상세 테이블
+  const sorted=[...data].sort((a,b)=>b.cost-a.cost);
+  const tableRows=sorted.map(a=>`<tr>
+    <td title="${a.name}">${a.name}</td>
+    <td><span class="pill t-${a.type}">${a.type}</span></td>
+    <td style="font-size:12px;color:${a.corp==='송월(주)'?'#1A6B4A':'#3C3489'};font-weight:600;overflow:hidden;text-overflow:ellipsis">${a.corp}</td>
+    <td><span class="pill s-${a.astat}">${a.astat}</span></td>
+    <td style="color:var(--text3);font-size:12px">${a.acq_ym||'—'}</td>
+    <td style="text-align:right;font-weight:600">₩${C(a.cost)}</td>
+    <td style="text-align:right;color:var(--text3);font-size:12px">${(a.cost/tc*100).toFixed(1)}%</td>
+  </tr>`).join('');
+
+  html += `<div class="card" style="margin-top:16px">
+    <div class="card-hd"><div class="card-hd-title">자산 상세 목록</div><div class="card-hd-meta">취득가 내림차순</div></div>
+    <table><thead><tr>
+      <th style="width:25%">자산명</th><th style="width:13%">유형</th>
+      <th style="width:17%">법인</th><th style="width:10%">상태</th>
+      <th style="width:12%">취득년월</th><th style="width:15%">취득가</th><th style="width:8%">비중</th>
+    </tr></thead><tbody>${tableRows}</tbody></table>
+  </div>`;
+
+  document.getElementById('tab-portfolio').innerHTML = html;
+}
+
+// 업무 가이드 모달
+function openGuide(name, dday, tenant, monthly) {
+  document.getElementById('modal-title').textContent = name + ' — 업무 가이드';
+  const isOver = dday < 0;
+  let h = `<div class="m-meta"><span class="dday ${isOver?'dd-over':dday<=30?'dd-red':'dd-orange'}">${isOver?'+'+Math.abs(dday)+'일 경과':'D-'+dday}</span><span>${tenant}</span><span>${M(monthly)}/월</span></div>`;
+  if(isOver) h += `<div class="warn-box">⚠ 계약 종료일이 지났어요. 임차인이 계속 영업 중이면 묵시적 갱신으로 판단하고 엑셀에서 종료일을 1년 연장 후 저장해주세요.</div>`;
+  [{l:"즉시",i:[{t:"임차인에게 만료 사실 통보",g:"urgent"},{t:"갱신 의사 확인 (갱신/퇴거)",g:"urgent"},{t:"계약갱신요구권 행사 여부 확인",g:"legal"}]},
+   {l:"협의",i:[{t:"주변 시세 조사 및 임대료 인상률 결정 (상한 5%)",g:"finance"},{t:"보증금 조정 여부 협의",g:"finance"},{t:"미납 임대료 정산",g:"finance"}]},
+   {l:"계약 체결",i:[{t:"갱신 계약서 작성 및 서명",g:"legal"},{t:"엑셀 종료일·차임 업데이트 후 저장",g:"data"}]}
+  ].forEach(s => {
+    h += `<div class="sec-label">${s.l}<div class="sec-line"></div></div>`;
+    s.i.forEach((item,i) => {
+      const tc={legal:'tag-legal',finance:'tag-finance',urgent:'tag-urgent',data:'tag-data'}[item.g];
+      const tl={legal:'법무',finance:'재무',urgent:'긴급',data:'데이터'}[item.g];
+      h += `<div class="guide-item"><div class="guide-num">${i+1}</div><div>${item.t}<span class="tag ${tc}">${tl}</span></div></div>`;
+    });
+  });
+  document.getElementById('modal-body').innerHTML = h;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(e) {
+  if(e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// 초기 로드 + 5분마다 자동 갱신
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
